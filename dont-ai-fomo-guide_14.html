@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Don't AI FOMO — Claude × BD 工作指南</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --orange: #EE4D2D;
+  --orange-light: #FFF0ED;
+  --orange-dark: #C23A1E;
+  --navy: #1A237E;
+  --navy-mid: #283593;
+  --navy-light: #E8EAF6;
+  --white: #FFFFFF;
+  --ink: #1A1816;
+  --ink-70: #534F4B;
+  --ink-40: #9E9893;
+  --ink-15: #EDE9E6;
+  --ink-07: #F6F4F2;
+  --chat: #27500A;    --chat-bg: #EAF3DE;
+  --cowork: #0C447C;  --cowork-bg: #E6F1FB;
+  --code: #3C3489;    --code-bg: #EEEDFE;
+  --skill: #633806;   --skill-bg: #FAEEDA;
+  --artifact: #712B13;--artifact-bg: #FAECE7;
+  --sales: #1A5C5C;   --sales-bg: #E0F5F3;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--white);color:var(--ink);min-height:100vh;overflow-x:hidden}
+
+/* ── NAV ── */
+nav{position:sticky;top:0;z-index:100;background:var(--orange);padding:0 40px}
+.nav-inner{max-width:1000px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:52px}
+.nav-logo{font-size:13px;font-weight:600;color:var(--white);letter-spacing:0.04em}
+.nav-links{display:flex;gap:4px}
+.nav-links a{font-size:12px;color:rgba(255,255,255,0.8);text-decoration:none;padding:5px 12px;border-radius:6px;transition:all 0.15s}
+.nav-links a:hover{color:var(--white);background:rgba(255,255,255,0.18)}
+
+/* ── HERO ── */
+.hero-wrap{background:var(--orange);position:relative;overflow:hidden}
+.hero-wrap::before{
+  content:'';position:absolute;bottom:0;right:0;
+  width:320px;height:320px;
+  background:var(--navy);
+  clip-path:polygon(100% 0,100% 100%,0 100%);
+}
+.hero-wrap::after{
+  content:'';position:absolute;bottom:0;right:160px;
+  width:180px;height:180px;
+  background:var(--orange-dark);
+  clip-path:polygon(100% 0,100% 100%,0 100%);
+}
+.hero{position:relative;z-index:1;padding:80px 40px 88px;max-width:1000px;margin:0 auto}
+
+.hero-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--white);border:1px solid rgba(255,255,255,0.4);padding:6px 16px;border-radius:99px;margin-bottom:32px;opacity:.9}
+.hero-dot{width:7px;height:7px;background:var(--white);border-radius:50%;animation:pulse 2s ease-in-out infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.65)}}
+
+.hero h1{font-family:'DM Serif Display',serif;font-size:clamp(56px,8.5vw,108px);line-height:0.96;letter-spacing:-0.03em;margin-bottom:8px;color:var(--white)}
+.hero h1 .line2{display:block;font-style:italic}
+.hero h1 .line3{display:block;font-size:clamp(22px,3.2vw,42px);color:rgba(255,255,255,0.75);font-style:normal;margin-top:10px;letter-spacing:-0.01em;font-family:'DM Sans',sans-serif;font-weight:300}
+
+.hero-sub{font-size:16px;font-weight:300;color:rgba(255,255,255,0.8);max-width:520px;line-height:1.7;margin:28px 0 36px}
+.hero-tags{display:flex;flex-wrap:wrap;gap:8px}
+.hero-tag{font-size:11px;font-weight:500;padding:6px 14px;border-radius:99px;border:1px solid rgba(255,255,255,0.35);color:rgba(255,255,255,0.85);transition:all 0.15s}
+.hero-tag:hover{border-color:var(--white);color:var(--white);background:rgba(255,255,255,0.12)}
+.hero-tag.sales{border-color:rgba(255,255,255,0.5);background:rgba(255,255,255,0.12);color:var(--white)}
+
+/* ── TOOLS ── */
+.tools-section{background:var(--white);color:var(--ink)}
+.tools-inner{max-width:1000px;margin:0 auto;padding:56px 40px}
+.section-eyebrow{font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-40);margin-bottom:8px}
+.section-title{font-family:'DM Serif Display',serif;font-size:32px;color:var(--ink);margin-bottom:28px}
+.section-title em{color:var(--orange);font-style:italic}
+.tools-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:12px}
+.tool-card{padding:20px 18px;border-radius:14px;border:1px solid transparent;transition:transform 0.2s,box-shadow 0.2s;cursor:default}
+.tool-card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,0.09)}
+.tool-card.chat    {background:var(--chat-bg);   border-color:#C0DD9770}
+.tool-card.cowork  {background:var(--cowork-bg); border-color:#85B7EB70}
+.tool-card.code    {background:var(--code-bg);   border-color:#AFA9EC70}
+.tool-card.skill   {background:var(--skill-bg);  border-color:#EF9F2770}
+.tool-card.artifact{background:var(--artifact-bg);border-color:#F0997B70}
+.tool-icon{font-size:24px;margin-bottom:12px}
+.tool-name{font-size:14px;font-weight:600;margin-bottom:5px}
+.tool-name.chat    {color:var(--chat)}
+.tool-name.cowork  {color:var(--cowork)}
+.tool-name.code    {color:var(--code)}
+.tool-name.skill   {color:var(--skill)}
+.tool-name.artifact{color:var(--artifact)}
+.tool-desc{font-size:12px;color:var(--ink-70);line-height:1.55}
+
+/* ── TIPS ── */
+.tips-section{background:var(--ink-07);color:var(--ink)}
+.tips-inner{max-width:1000px;margin:0 auto;padding:56px 40px}
+.tips-header{margin-bottom:28px}
+.tips-header p{font-size:14px;color:var(--ink-70);margin-top:6px}
+
+.role-toggle{display:flex;gap:0;border:1.5px solid var(--ink-15);border-radius:10px;overflow:hidden;margin-bottom:20px;width:fit-content}
+.role-toggle-btn{font-size:12px;font-weight:500;padding:8px 18px;cursor:pointer;border:none;background:transparent;color:var(--ink-70);font-family:'DM Sans',sans-serif;transition:all 0.15s;display:flex;align-items:center;gap:6px}
+.role-toggle-btn+.role-toggle-btn{border-left:1.5px solid var(--ink-15)}
+.role-toggle-btn.active.bd{background:var(--orange);color:var(--white)}
+.role-toggle-btn.active.sales{background:var(--navy);color:var(--white)}
+.role-toggle-btn.active.cm{background:#1A6B3C;color:var(--white)}
+
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
+.filter-btn{font-size:12px;font-weight:500;padding:6px 14px;border-radius:99px;border:1px solid var(--ink-15);background:transparent;color:var(--ink-70);cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif}
+.filter-btn:hover{border-color:var(--orange);color:var(--orange)}
+.filter-btn.active.bd{background:var(--orange);color:var(--white);border-color:var(--orange)}
+.filter-btn.active.sales{background:var(--navy);color:var(--white);border-color:var(--navy)}
+
+.tips-grid-wrap{display:flex;flex-direction:column;gap:10px}
+.tip-card{background:var(--white);border:1px solid #E4E0DC;border-radius:14px;overflow:hidden;transition:border-color 0.15s,box-shadow 0.15s}
+.tip-card:hover{border-color:#EE4D2D50;box-shadow:0 4px 18px rgba(238,77,45,0.07)}
+.tip-card.open{border-color:#EE4D2D80}
+.tip-card.sales-card:hover{border-color:#1A237E40;box-shadow:0 4px 18px rgba(26,35,126,0.07)}
+.tip-card.sales-card.open{border-color:#1A237E70}
+.tip-header-row{display:flex;align-items:center;gap:14px;padding:16px 20px;cursor:pointer;user-select:none}
+.tip-num{width:28px;height:28px;border-radius:50%;background:var(--orange-light);color:var(--orange);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tip-num.sales-num{background:var(--navy-light);color:var(--navy)}
+.tip-meta{flex:1}
+.tip-badges{display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap}
+.tip-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;letter-spacing:0.03em}
+.badge-chat    {background:var(--chat-bg);   color:var(--chat)}
+.badge-cowork  {background:var(--cowork-bg); color:var(--cowork)}
+.badge-code    {background:var(--code-bg);   color:var(--code)}
+.badge-skill   {background:var(--skill-bg);  color:var(--skill)}
+.badge-artifact{background:var(--artifact-bg);color:var(--artifact)}
+.badge-sales   {background:var(--navy-light);color:var(--navy)}
+.badge-cat{font-size:10px;color:var(--ink-40);font-weight:400}
+.tip-title{font-size:14px;font-weight:500;color:var(--ink);line-height:1.4}
+.tip-chevron{font-size:15px;color:var(--ink-40);transition:transform 0.2s;flex-shrink:0}
+.tip-card.open .tip-chevron{transform:rotate(180deg)}
+.tip-body{display:none;padding:16px 20px 20px;border-top:1px solid var(--ink-15)}
+.tip-card.open .tip-body{display:block}
+.tip-desc{font-size:13px;color:var(--ink-70);line-height:1.65;margin-bottom:14px}
+.prompt-box{background:var(--ink-07);border-left:3px solid var(--orange);border-radius:0 8px 8px 0;padding:12px 14px}
+.prompt-box.sales-prompt{border-left-color:var(--navy)}
+.prompt-label{font-size:10px;font-weight:700;color:var(--ink-40);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px}
+.prompt-text{font-size:12px;color:var(--ink);line-height:1.65;font-style:italic}
+.copy-btn{margin-top:12px;font-size:12px;padding:7px 16px;border-radius:8px;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;font-weight:500;transition:background 0.15s}
+.copy-btn.bd{background:var(--orange);color:var(--white)}
+.copy-btn.bd:hover{background:var(--orange-dark)}
+.copy-btn.sales{background:var(--navy);color:var(--white)}
+.copy-btn.cm{background:#1A6B3C;color:var(--white)}
+.copy-btn.cm:hover{background:#145530}
+.tip-card.cm-card:hover{border-color:#1A6B3C50;box-shadow:0 4px 18px rgba(26,107,60,0.07)}
+.tip-card.cm-card.open{border-color:#1A6B3C80}
+.tip-num.cm-num{background:#E8F5E9;color:#1A6B3C}
+.badge-cm{background:#E8F5E9;color:#1A6B3C}
+.prompt-box.cm-prompt{border-left-color:#1A6B3C}
+.filter-btn.active.cm{background:#1A6B3C;color:var(--white);border-color:#1A6B3C}
+.role-toggle-btn.active.cm{background:#1A6B3C;color:var(--white)}
+.copy-btn.sales:hover{background:var(--navy-mid)}
+.empty-tips{text-align:center;padding:48px;color:var(--ink-40);font-size:14px}
+
+/* ── MAP ── */
+.map-section{background:var(--white);color:var(--ink)}
+.map-inner{max-width:1000px;margin:0 auto;padding:56px 40px}
+.map-header{margin-bottom:28px}
+.map-header p{font-size:14px;color:var(--ink-70);margin-top:6px}
+.map-filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.map-pill{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:7px 14px;border-radius:99px;cursor:pointer;border:1px solid;transition:opacity 0.15s,transform 0.12s;font-family:'DM Sans',sans-serif}
+.map-pill:hover{transform:translateY(-1px)}
+.map-pill.dim{opacity:0.25}
+.map-pill.chat    {background:var(--chat-bg);   color:var(--chat);   border-color:#C0DD97}
+.map-pill.cowork  {background:var(--cowork-bg); color:var(--cowork); border-color:#85B7EB}
+.map-pill.code    {background:var(--code-bg);   color:var(--code);   border-color:#AFA9EC}
+.map-pill.skill   {background:var(--skill-bg);  color:var(--skill);  border-color:#EF9F27}
+.map-pill.artifact{background:var(--artifact-bg);color:var(--artifact);border-color:#F0997B}
+.map-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0}
+.wf-grid{display:flex;flex-direction:column;gap:10px}
+.wf-row{display:grid;grid-template-columns:145px 1fr;border:1px solid #E4E0DC;border-radius:14px;overflow:hidden;transition:border-color 0.15s}
+.wf-row:hover{border-color:#C4BEBB}
+.wf-label{padding:16px 14px;background:var(--ink-07);border-right:1px solid #E4E0DC;display:flex;flex-direction:column;justify-content:center}
+.wf-name{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:3px}
+.wf-sub{font-size:11px;color:var(--ink-40);line-height:1.4}
+.wf-items{padding:10px 14px;display:flex;flex-direction:column}
+.wf-item{display:flex;align-items:flex-start;gap:10px;padding:10px 8px;border-radius:8px;transition:background 0.12s;border-top:1px solid transparent}
+.wf-item+.wf-item{border-top-color:var(--ink-15)}
+.wf-item:hover{background:var(--ink-07)}
+.wf-tag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap;flex-shrink:0;margin-top:2px}
+.tag-chat    {background:var(--chat-bg);   color:var(--chat)}
+.tag-cowork  {background:var(--cowork-bg); color:var(--cowork)}
+.tag-code    {background:var(--code-bg);   color:var(--code)}
+.tag-skill   {background:var(--skill-bg);  color:var(--skill)}
+.tag-artifact{background:var(--artifact-bg);color:var(--artifact)}
+.wf-text{font-size:12px;color:var(--ink-70);line-height:1.55;flex:1}
+.wf-text strong{font-weight:600;color:var(--ink)}
+.wf-arrow{font-size:14px;color:var(--ink-40);flex-shrink:0;margin-top:2px}
+
+/* ── FOOTER ── */
+footer{background:var(--navy);color:rgba(255,255,255,0.6);text-align:center;padding:36px 40px;font-size:12px;line-height:1.8}
+footer strong{color:var(--white);font-weight:600}
+footer .orange{color:#FF8A70}
+footer .teal{color:#80CBC4}
+
+@media(max-width:640px){
+  nav{padding:0 20px}
+  .hero{padding:56px 20px 64px}
+  .tools-inner,.tips-inner,.map-inner{padding:40px 20px}
+  .hero h1{font-size:clamp(44px,12vw,64px)}
+  .wf-row{grid-template-columns:1fr}
+  .wf-label{border-right:none;border-bottom:1px solid #E4E0DC}
+  .nav-links{display:none}
+  .hero-wrap::before{width:180px;height:180px}
+  .hero-wrap::after{width:100px;height:100px;right:90px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <span class="nav-logo">Don't AI FOMO</span>
+    <div class="nav-links">
+      <a href="#tools">工具介紹</a>
+      <a href="#tips">每日撇步</a>
+      <a href="#map">情境地圖</a>
+      <a href="#bdupdate">BD Update</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ══ HERO ══ -->
+<div class="hero-wrap">
+  <section class="hero">
+    <div class="hero-eyebrow">
+      <span class="hero-dot"></span>
+      Shopee Taiwan · BD Team
+    </div>
+    <h1>
+      Don't
+      <span class="line2">AI FOMO</span>
+      <span class="line3">Claude × BD 工作指南</span>
+    </h1>
+    <p class="hero-sub">給 L&amp;E / Books 品類 BD 和業務同仁的 Claude 應用地圖。找到你的工作場景，直接複製提示詞就能用。</p>
+    <div class="hero-tags">
+      <span class="hero-tag">品類管理</span>
+      <span class="hero-tag">業務開發</span>
+      <span class="hero-tag">數據分析</span>
+      <span class="hero-tag">報告製作</span>
+      <span class="hero-tag">趨勢追蹤</span>
+      <span class="hero-tag">活動企劃</span>
+      <span class="hero-tag sales">業務 × 賣家溝通</span>
+      <span class="hero-tag sales">聯盟行銷推廣</span>
+      <span class="hero-tag sales">店鋪營運輔導</span>
+    </div>
+  </section>
+</div>
+
+<!-- ══ TOOLS ══ -->
+<section class="tools-section" id="tools">
+  <div class="tools-inner">
+    <p class="section-eyebrow">認識五大工具</p>
+    <h2 class="section-title">選對工具，<em>事半功倍</em></h2>
+    <div class="tools-grid">
+      <div class="tool-card chat">
+        <div class="tool-icon">💬</div>
+        <div class="tool-name chat">Chat</div>
+        <div class="tool-desc">對話式問答、即時搜尋、快速生成文案。門檻最低，隨開隨用，適合一次性任務。</div>
+      </div>
+      <div class="tool-card cowork">
+        <div class="tool-icon">🗂</div>
+        <div class="tool-name cowork">Cowork</div>
+        <div class="tool-desc">可操作檔案的工作環境。上傳 Excel/PPT 讓 Claude 直接處理，或建立 Project 記住你的工作規則。</div>
+      </div>
+      <div class="tool-card code">
+        <div class="tool-icon">⌨️</div>
+        <div class="tool-name code">Claude Code</div>
+        <div class="tool-desc">命令列工具，讓 Claude 寫並執行 Python 腳本。適合自動化抓資料、批量處理 Excel、定期任務。</div>
+      </div>
+      <div class="tool-card skill">
+        <div class="tool-icon">🧩</div>
+        <div class="tool-name skill">Skills</div>
+        <div class="tool-desc">預設在 Project 裡的「工作規則包」。月報格式、PPT 版型、溝通風格，讓 Claude 每次照你的標準輸出。</div>
+      </div>
+      <div class="tool-card artifact">
+        <div class="tool-icon">⚡</div>
+        <div class="tool-name artifact">Artifacts</div>
+        <div class="tool-desc">對話中直接生成可互動圖表、提案 HTML、儀表板。比截圖快，比 PPT 靈活，適合即席展示。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ TIPS ══ -->
+<section class="tips-section" id="tips">
+  <div class="tips-inner">
+    <div class="tips-header">
+      <p class="section-eyebrow">每日靈感</p>
+      <h2 class="section-title">三個撇步，<em>直接能用</em></h2>
+      <p>選你的角色，再按主題篩選，展開卡片可複製提示詞</p>
+    </div>
+
+    <div class="role-toggle">
+      <button class="role-toggle-btn active bd" id="role-bd" onclick="switchRole('bd')">
+        <span style="width:8px;height:8px;border-radius:50%;background:currentColor;flex-shrink:0"></span>
+        BD / 品類管理
+      </button>
+      <button class="role-toggle-btn sales" id="role-sales" onclick="switchRole('sales')">
+        <span style="width:8px;height:8px;border-radius:50%;background:currentColor;flex-shrink:0"></span>
+        業務 / 廠商管理
+      </button>
+      <button class="role-toggle-btn cm" id="role-cm" onclick="switchRole('cm')">
+        <span style="width:8px;height:8px;border-radius:50%;background:currentColor;flex-shrink:0"></span>
+        CM / 品類分析
+      </button>
+    </div>
+
+    <div id="sales-intro" style="display:none;background:#E8EAF6;border-radius:12px;padding:16px 20px;margin-bottom:20px;border-left:4px solid var(--navy)">
+      <p style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:6px">💡 怎麼用這些提示詞？</p>
+      <p style="font-size:12px;color:#3949AB;line-height:1.7">
+        1. 選一個符合你今天工作情境的卡片<br>
+        2. 展開後看「參考提示詞」<br>
+        3. 按「複製提示詞」，貼到 <strong>claude.ai</strong> 的對話框<br>
+        4. 把 <strong>[括號裡的文字]</strong> 換成你的實際狀況，送出就可以用<br>
+        <span style="color:#5C6BC0">不需要會寫 prompt，直接填空就好。</span>
+      </p>
+    </div>
+    <div class="filter-row" id="tips-filter"></div>
+    <div class="tips-grid-wrap" id="tips-list"></div>
+  </div>
+</section>
+
+<!-- ══ MAP ══ -->
+<section class="map-section" id="map">
+  <div class="map-inner">
+    <div class="map-header">
+      <p class="section-eyebrow">工具 × 情境</p>
+      <h2 class="section-title">找到你的<em>應用場景</em></h2>
+      <p>點擊工具標籤篩選，找到你現在手頭任務最適合的 Claude 應用方式</p>
+    </div>
+    <div class="map-filter-row" id="map-filter">
+      <div class="map-pill chat"     data-tool="chat"     onclick="mapFilter('chat',this)"><span class="map-dot"></span>Chat</div>
+      <div class="map-pill cowork"   data-tool="cowork"   onclick="mapFilter('cowork',this)"><span class="map-dot"></span>Cowork</div>
+      <div class="map-pill code"     data-tool="code"     onclick="mapFilter('code',this)"><span class="map-dot"></span>Claude Code</div>
+      <div class="map-pill skill"    data-tool="skill"    onclick="mapFilter('skill',this)"><span class="map-dot"></span>Skills</div>
+      <div class="map-pill artifact" data-tool="artifact" onclick="mapFilter('artifact',this)"><span class="map-dot"></span>Artifacts</div>
+    </div>
+    <div class="wf-grid" id="wf-grid"></div>
+  </div>
+</section>
+
+<!-- ══ BD UPDATE ══ -->
+<section style="background:var(--navy);color:var(--white)" id="bdupdate">
+  <div style="max-width:1000px;margin:0 auto;padding:56px 40px">
+    <p style="font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:rgba(255,255,255,0.45);margin-bottom:8px">BD Update 應用</p>
+    <h2 style="font-family:'DM Serif Display',serif;font-size:32px;margin-bottom:6px;color:var(--white)">把 <em style="color:#FF8A70;font-style:italic">SMT Project Update</em> 變成你的週計劃</h2>
+    <p style="font-size:14px;color:rgba(255,255,255,0.6);margin-bottom:32px;max-width:580px;line-height:1.6">每週 SMT 出的 project update 內容密集、格式複雜。以下是把這些 update 轉換成實際行動的 Claude 應用場景。</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+      <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:20px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;color:rgba(255,255,255,0.4);margin-bottom:10px;text-transform:uppercase">每週必做</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <span style="background:#FF8A7025;color:#FF8A70;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap;margin-top:2px;flex-shrink:0">Chat</span>
+            <span style="font-size:12px;color:rgba(255,255,255,0.7);line-height:1.55"><strong style="color:var(--white)">Update 消化器</strong> — 把 SMT update 貼給 Claude，立刻產出「我這週要做什麼」行動清單，含截止日期</span>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <span style="background:#FF8A7025;color:#FF8A70;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap;margin-top:2px;flex-shrink:0">Chat</span>
+            <span style="font-size:12px;color:rgba(255,255,255,0.7);line-height:1.55"><strong style="color:var(--white)">賣家通知訊息</strong> — 輸入活動細節，自動生成各活動的 LINE 推廣話術，長度控制在 200 字以內</span>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <span style="background:#B5D4F425;color:#B5D4F4;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap;margin-top:2px;flex-shrink:0">Cowork</span>
+            <span style="font-size:12px;color:rgba(255,255,255,0.7);line-height:1.55"><strong style="color:var(--white)">NC% 週報分析</strong> — 上傳 Dashboard 下載的追蹤數據，自動識別本週問題商品，輸出賣家介入優先清單</span>
+          </div>
+        </div>
+      </div>
+      <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:20px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;color:rgba(255,255,255,0.4);margin-bottom:10px;text-transform:uppercase">KPI 追蹤</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <span style="background:#FAECE725;color:#F0997B;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap;margin-top:2px;flex-shrink:0">Artifact</span>
+            <span style="font-size:12px;color:rgba(255,255,255,0.7);line-height:1.55"><strong style="color:var(--white)">NC% 試算器</strong> — 輸入 Baseline / Target / 實際 NC%，即時計算達成率和 KPI 得分（10分制）</span>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <span style="background:#FAECE725;color:#F0997B;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap;margin-top:2px;flex-shrink:0">Artifact</span>
+            <span style="font-size:12px;color:rgba(255,255,255,0.7);line-height:1.55"><strong style="color:var(--white)">FBS 開通率試算</strong> — 輸入賣家商品數和已開通數，自動計算距 30% 門檻還差多少，以及可獲得哪些獎勵</span>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <span style="background:#B5D4F425;color:#B5D4F4;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap;margin-top:2px;flex-shrink:0">Cowork</span>
+            <span style="font-size:12px;color:rgba(255,255,255,0.7);line-height:1.55"><strong style="color:var(--white)">月底衝刺排序</strong> — 上傳賣家名單和 KPI 狀況，智能排出今天最應該打電話的順序和溝通重點</span>
+          </div>
+        </div>
+      </div>
+      <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:20px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;color:rgba(255,255,255,0.4);margin-bottom:10px;text-transform:uppercase">本週 SMT 重點對應</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:12px;color:rgba(255,255,255,0.55);padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:8px;border-left:2px solid #FF8A70;line-height:1.5">
+            <strong style="color:rgba(255,255,255,0.8)">FBS 6月獎勵</strong> — 讓 Claude 幫你整理每個賣家符合哪個方案（A/B/C/D），客製化推廣話術
+          </div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.55);padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:8px;border-left:2px solid #FF8A70;line-height:1.5">
+            <strong style="color:rgba(255,255,255,0.8)">NC% Q3 KPI Pool 調整</strong> — 讓 Claude 分析你的 tracking pool，找出高影響力品項優先確認
+          </div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.55);padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:8px;border-left:2px solid #B5D4F4;line-height:1.5">
+            <strong style="color:rgba(255,255,255,0.8)">H2 降% 專案</strong> — 貼入活動說明，讓 Claude 幫你準備賣家版說明話術和 FAQ
+          </div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.55);padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:8px;border-left:2px solid #B5D4F4;line-height:1.5">
+            <strong style="color:rgba(255,255,255,0.8)">6.18 當日出貨 / 週末出貨</strong> — 生成參與賣家的追蹤清單格式，每天快速更新出貨達標狀況
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p><strong>Don't AI FOMO</strong> — Shopee Taiwan · BD 工作指南</p>
+  <p>BD 版整理：<span class="orange">Jacquelyn</span> · 業務版由 <span class="teal">L&amp;E Sales Team</span> 共同貢獻</p>
+</footer>
+
+<script>
+const BD_TIPS = [
+  { id:1, cat:'report', catLabel:'報告製作', tool:'cowork', toolLabel:'Cowork',
+    title:'把雙週報自動整合成月報摘要，3 分鐘搞定',
+    desc:'把 4 份雙週報的重點貼給 Claude，自動識別跨週的成長驅動因素、衰退品項，輸出結構化月報草稿，含信心等級標注。',
+    prompt:'以下是我 L&E 品類 5 月份的 2 份雙週報數據：[貼入數據]。請幫我：1) 找出連續兩週成長的品項 2) 標出反轉（週增→週減）的警示品項 3) 整合成月報格式，含 key highlights 和 BD 下一步建議。' },
+  { id:2, cat:'bd', catLabel:'業務開發', tool:'chat', toolLabel:'Chat',
+    title:'快速生成品牌開發提案信框架（繁中版）',
+    desc:'針對 LEGO、桌遊、IP 授權商等潛在合作廠商，用 Claude 產出客製化開發信，帶入 Shopee 台灣數據增加說服力。',
+    prompt:'我要接觸 [品牌名] 的台灣總代理，他們主力商品是 [品項]。請用繁體中文寫一封 BD 開發信，強調：1) Shopee 在台灣玩具/書籍品類的市場地位 2) 去年雙 11 我們品類的亮眼表現 3) 提出合作切入點。語氣：專業但有誠意，不要太官方。' },
+  { id:3, cat:'trend', catLabel:'趨勢追蹤', tool:'chat', toolLabel:'Chat',
+    title:'每週 IP 熱點快報：追動漫 / 偶像趨勢',
+    desc:'用搜尋功能 + Claude 分析最近爆紅的 IP，判斷哪些值得在 Movie Anime & Comic、Idol Product 品類加碼選品。',
+    prompt:'請幫我搜尋本週台灣最熱門的動漫、日韓偶像、IP 授權相關新聞。整理成：1) 正在爆紅的 IP Top 3 2) 對應周邊商品機會 3) 建議在 Shopee 應對的選品策略。重點關注：Idol Product、Collectibles、Stuffed Toy 的商機。' },
+  { id:4, cat:'data', catLabel:'數據分析', tool:'cowork', toolLabel:'Cowork',
+    title:'CSV 銷售數據 → 自動找出「沉默潛力股」品項',
+    desc:'上傳品類銷售 CSV，讓 Claude 找出流量低但轉換率高的隱藏潛力商品，這些通常是值得加碼的 BD 目標。',
+    prompt:'我上傳了 L&E 品類上個月的 SKU 銷售數據（含：商品名、瀏覽量、加購率、轉換率、銷售額）。請找出：流量排名在後 50% 但轉換率在前 25% 的「沉默潛力股」，並推測可能原因和 BD 應對方式。' },
+  { id:5, cat:'promo', catLabel:'活動企劃', tool:'chat', toolLabel:'Chat',
+    title:'雙 11 / 年中慶前：模擬競品策略找差異化',
+    desc:'輸入觀察到的競品活動規劃，讓 Claude 分析差異化機會，幫你在提案中凸顯 L&E 品類的獨特玩法。',
+    prompt:'競品平台在年中慶對桌遊品類的活動策略是：[你觀察到的訊息]。請從 Shopee BD 角度分析：1) 差異化切入點 2) 針對 LEGO / Board Games / Books 的分品類活動建議 3) 可以帶進商談的獨家優惠設計思路。' },
+  { id:6, cat:'bd', catLabel:'業務開發', tool:'cowork', toolLabel:'Cowork',
+    title:'廠商會議後：30 秒生成追蹤清單 & Follow-up 信',
+    desc:'每次廠商 meeting 後，把筆記貼給 Claude，自動生成 action items、廠商承諾事項，以及下次跟進的信件草稿。',
+    prompt:'以下是我今天和 [廠商名] 的會議筆記：[貼入筆記]。請整理成：1) 廠商確認的承諾事項（含時間點）2) 我方 action items 3) 建議的 follow-up 信件主旨和第一段。' },
+  { id:7, cat:'trend', catLabel:'趨勢追蹤', tool:'chat', toolLabel:'Chat',
+    title:'每月一次：Books 品類市場脈動報告（5 分鐘版）',
+    desc:'讓 Claude 搜尋台灣實體書店暢銷榜 + 電商趨勢，對應 9 個 Books subcat，找出選品補強方向。',
+    prompt:'請搜尋本月台灣前三大書店（誠品、博客來、金石堂）的暢銷排行榜，對照書籍分類：參考書、漫畫小說、文藝書籍、親子書籍、心理勵志、健康運動、商業理財、星座命理、人文社會。找出：1) 最熱的 3 個細類 2) 即將爆發的潛力主題 3) Shopee 可以搶先佈局的選品建議。' },
+  { id:8, cat:'report', catLabel:'報告製作', tool:'skill', toolLabel:'Skill',
+    title:'PPT 文案太乾？用 Skill 加入「洞察語氣」',
+    desc:'把數字投影片草稿搭配 pptx skill，讓 Claude 把平淡數字翻譯成有 insight 感的 BD 敘事。',
+    prompt:'以下是我 5 月份品類報告的數字摘要：[貼入數字]。請用 pptx skill 製作月報投影片，並把每個重要數字轉化成洞察文案。例如「LEGO 成長 +23%」→「LEGO 連續 3 個月超越品類均值，顯示高客單價品項在母親節檔期的禮品化趨勢正在強化」。語氣適合給 BD Director 簡報。' },
+  { id:9, cat:'data', catLabel:'數據分析', tool:'code', toolLabel:'Claude Code',
+    title:'建立每週自動抓取競品定價的 Python 腳本',
+    desc:'用 Claude Code 寫 Python 腳本，定期抓取競品平台特定品項的售價，存成 Excel，每週監控定價趨勢不費力。',
+    prompt:'請幫我寫一個 Python 腳本，使用 requests + BeautifulSoup，每週抓取 momo 購物網上 [商品關鍵字] 的搜尋結果，收集：商品名、售價、評分、評論數，存成 Excel，並自動標注比上週漲跌的品項。' },
+  { id:10, cat:'promo', catLabel:'活動企劃', tool:'chat', toolLabel:'Chat',
+    title:'衝 Stuffed Toy 業績？讓 Claude 找節日行銷角度',
+    desc:'針對即將到來的節日，讓 Claude 發想品類行銷主題，結合 IP 趨勢和消費者洞察，產出可直接帶進廠商提案的企劃方向。',
+    prompt:'距離 [節日名稱] 還有 3 週，我負責 Stuffed Toy 和 Idol Product 品類。請發想 3 個差異化行銷角度，每個包含：主題概念、目標受眾、適合主打的商品類型、可以給廠商的配合條件建議。要有創意，不要只說「節日送禮」這種老套。' },
+  { id:11, cat:'bd', catLabel:'業務開發', tool:'chat', toolLabel:'Chat',
+    title:'拜訪前 10 分鐘：快速品牌情報報告',
+    desc:'在拜訪廠商前，讓 Claude 搜尋品牌背景、市場定位、近期新品方向，讓你進門第一句話就顯得專業。',
+    prompt:'我下週要拜訪 [品牌名/廠商名]，他們主要做 [產品類型]。請整理一份 10 分鐘能看完的品牌情報，包含：1) 品牌定位和主力客群 2) 台灣市場現況和主要通路 3) 近半年值得關注的新品或品牌動態 4) 可以用來開場的 2-3 個具體話題。' },
+  { id:12, cat:'data', catLabel:'數據分析', tool:'artifact', toolLabel:'Artifact',
+    title:'季度檢討前：互動式品類健康度儀表板',
+    desc:'用 Artifact 做出可互動的品類健康分數卡，含紅黃綠燈預警，開會時直接打開給 Director 看。',
+    prompt:'請用 React artifact 做一個品類健康度儀表板，我可以輸入各 subcat 的月成長率和業績達成率，系統自動顯示紅燈（衰退）、黃燈（持平）、綠燈（成長）警示，並給出 BD 行動建議。' },
+];
+
+const SALES_TIPS = [
+
+  // ══ 業務開發 ══
+  { id:101, cat:'dev', catLabel:'業務開發', tool:'chat', toolLabel:'Chat', isSales:true,
+    title:'大促邀稿：一鍵生成 LINE 邀請訊息',
+    desc:'把活動規格丟給 Claude，直接輸出可以傳給廠商的邀稿訊息，不用每次重新想怎麼開口。',
+    prompt:'我要邀請廠商參加 [活動名稱，例如：7月限時特賣]。\n活動時間：[X月X日－X月X日]\n入稿截止：[日期]\n廠商需提供：[例如：商品清單、折扣設定、活動圖]\n表單連結：[Google 試算表連結]\n\n請幫我寫一段 LINE 邀稿訊息，語氣像在跟熟識的廠商朋友說話，說清楚要填什麼、怎麼填、幾號前交回。150 字以內。' },
+
+  { id:102, cat:'dev', catLabel:'業務開發', tool:'chat', toolLabel:'Chat', isSales:true,
+    title:'廠商猶豫要不要參加活動：幫你寫說服話術',
+    desc:'廠商覺得折扣太深或不確定效果，讓 Claude 從廠商利益出發準備說服的話，不要讓他覺得你只是在完成 KPI。',
+    prompt:'廠商 [廠商名稱] 賣的是 [品項]，他猶豫要不要參加 [活動名稱]。\n他的顧慮：[例如：折扣太深怕傷品牌/不確定流量夠不夠/之前參加效果不好]\n\n請幫我準備一段說服話術，從廠商的利益出發說明這次活動的具體好處，語氣真誠不像在背稿。150 字以內。' },
+
+  { id:103, cat:'dev', catLabel:'業務開發', tool:'chat', toolLabel:'Chat', isSales:true,
+    title:'大促鋪底案型：幫廠商規劃最適合的組合',
+    desc:'大促前要建議廠商報哪些案型，每個廠商狀況不同，讓 Claude 根據他的品項幫你想一套搭配建議。',
+    prompt:'大促 [活動名稱] 快到了，我要給廠商 [廠商名稱] 建議參加哪些案型。\n廠商資料：\n主力商品：[品項]\n價格帶：[例如：200-800元]\n過去大促表現：[好/普通/第一次參加]\n目前有投廣告：[有/沒有]\n\n可參加案型：[列出選項，例如：限時特賣、加購優惠、滿額折扣、廣告加碼]\n\n請建議最適合的 2-3 個案型組合（說明為什麼），以及每個案型的具體設定建議。最後整理成可以傳給廠商的話術。' },
+
+  { id:104, cat:'dev', catLabel:'業務開發', tool:'chat', toolLabel:'Chat', isSales:true,
+    title:'推廣聯盟行銷：一段話讓廠商聽懂',
+    desc:'很多廠商不知道聯盟行銷是什麼，讓 Claude 用最簡單的話解釋，並根據廠商的品項調整說法。',
+    prompt:'我要向 [品項類型] 廠商推廣 Shopee 聯盟行銷。\n廠商背景：月銷大概 [金額]，目前主要靠站內搜尋流量。\n\n請幫我寫一段 LINE 推廣訊息：\n1) 一句話說明聯盟行銷是什麼\n2) 對這個廠商的具體好處\n3) 他需要做什麼（越簡單越好）\n不要用術語，語氣像在幫朋友介紹機會，150 字以內。' },
+
+  { id:105, cat:'dev', catLabel:'業務開發', tool:'chat', toolLabel:'Chat', isSales:true,
+    title:'請廠商開卷：寫一封讓他願意行動的 LINE',
+    desc:'請廠商設定折扣卷是日常工作，讓 Claude 根據活動背景寫一段自然的邀請訊息，讓廠商覺得是為他量身設計的。',
+    prompt:'我需要請廠商 [廠商名稱] 在 [活動/時間] 開折扣卷。\n建議折扣設定：[例如：滿499折50]\n廠商賣的是：[品項]\n他之前開過卷：[有/沒有]，效果：[好/普通/不知道]\n\n請幫我寫一段 LINE 訊息，說明為什麼這時候開卷有效、建議怎麼設定、開卷後我會幫他做什麼配合。語氣要讓他覺得是我特別幫他想的，不是群發，130 字以內。' },
+
+  // ══ 業務維護 ══
+  { id:106, cat:'maintain', catLabel:'業務維護', tool:'chat', toolLabel:'Chat', isSales:true,
+    title:'催交表單但廠商沒回：寫一封不尷尬的催件訊息',
+    desc:'入稿截止前廠商還沒回表單，需要催但又不想讓氣氛變僵。讓 Claude 幫你寫一段自然不造成壓力的催件訊息。',
+    prompt:'入稿截止是 [日期]，還有 [X] 天。廠商 [廠商名稱] 還沒有回傳表單，我 [幾天前] 已經傳過一次提醒了。\n\n請幫我寫一段催件的 LINE 訊息，語氣輕鬆自然、不給壓力，但讓他清楚知道截止日期。可以帶點關心的語氣（例如：有沒有遇到什麼問題需要幫忙）。80 字以內。' },
+
+  { id:107, cat:'maintain', catLabel:'業務維護', tool:'chat', toolLabel:'Chat', isSales:true,
+    title:'廠商填錯表單：幫你寫「請重填」的友善訊息',
+    desc:'廠商填的資料格式不對或漏填，需要請他修正。讓 Claude 幫你寫一段友善但清楚的修正請求，不讓對方覺得被挑剔。',
+    prompt:'廠商 [廠商名稱] 填的入稿表單有以下問題：\n[列出問題，例如：\n- 商品A 折扣欄位填「85折」，但需要填折後實際金額\n- 商品B 主圖尺寸不符（需要 800x800px）\n- 第3列備註欄位空白]\n\n請幫我寫一段 LINE 訊息，說明哪裡需要修改、怎麼改、麻煩 [截止日期] 前重新回傳。語氣友善，讓廠商不覺得被責怪，120 字以內。' },
+
+  { id:108, cat:'maintain', catLabel:'業務維護', tool:'chat', toolLabel:'Chat', isSales:true,
+    title:'整理廠商給的雜亂資料：貼進來變成乾淨格式',
+    desc:'廠商回傳的資料常常格式很亂，混在 LINE 訊息或 email 裡。讓 Claude 幫你整理成可以直接貼到內部表單的格式。',
+    prompt:'廠商 [廠商名稱] 傳來的入稿資料如下（格式有點亂）：\n[把廠商給的資料直接貼進來]\n\n我需要整理成以下格式：\n[你的內部表單欄位，例如：商品名稱 / SKU編號 / 活動價格 / 活動數量上限 / 備註]\n\n請幫我整理成這個格式，資訊不完整的欄位標注「待確認」。' },
+
+  { id:109, cat:'maintain', catLabel:'業務維護', tool:'chat', toolLabel:'Chat', isSales:true,
+    title:'推廣無包裝出貨：幫廠商算省下多少錢',
+    desc:'無包裝出貨對廠商最有感的是省錢。讓 Claude 幫你算出具體數字，包裝成有說服力的話術。',
+    prompt:'我要向廠商推廣無包裝出貨（FBS）。\n廠商每月出貨約 [件數] 件，每件包材成本約 [金額] 元。\n\n請幫我：\n1) 算出每月可省下的包材費\n2) 算出一年節省金額\n3) 用這些數字寫一段 LINE 話術，讓他覺得這件事值得做。語氣要像在幫他省錢，不像在推銷，120 字以內。' },
+
+  { id:110, cat:'maintain', catLabel:'業務維護', tool:'chat', toolLabel:'Chat', isSales:true,
+    title:'廠商說廣告沒效：幫你準備有說服力的回應',
+    desc:'廠商對站內廣告有疑慮，讓 Claude 幫你說明怎麼做才有效，而不是直接叫他繼續投。',
+    prompt:'廠商 [廠商名稱] 說他之前投過站內廣告但沒什麼效果，不想再投了。\n他的商品是 [品項]，上次投廣告大概 [時間]，問題可能是 [你的推測，例如：關鍵字設定不對/出價太低]。\n\n請幫我準備回應：\n1) 說明上次可能是什麼原因沒效（不讓他覺得是他的錯）\n2) 這次可以怎麼做不一樣\n3) 給他一個低風險的起步建議\n語氣讓他覺得我是真的在幫他找方法，150 字以內。' },
+
+  // ══ 日常營運 ══
+  { id:111, cat:'ops', catLabel:'日常營運', tool:'chat', toolLabel:'Chat', isSales:true,
+    title:'無包裝訂單包裹不見了：幫你寫回覆話術',
+    desc:'賣家說客人的無包裝訂單包裹不見，這是最常見的客訴。讓 Claude 幫你準備清楚的回覆，說明處理步驟和賣家要做什麼。',
+    prompt:'賣家說有一筆無包裝（FBS）訂單，消費者反映包裹沒收到。\n訂單情況：[例如：貨態顯示已送達但買家說沒收到]\n\n請幫我準備回覆賣家的 LINE 訊息：\n1) 目前需要賣家做什麼（例如：提供訂單編號、截圖）\n2) 蝦皮這邊會怎麼處理\n3) 預計多久有回覆\n語氣讓賣家覺得問題被認真處理，不要讓他焦慮，120 字以內。' },
+
+  { id:112, cat:'ops', catLabel:'日常營運', tool:'chat', toolLabel:'Chat', isSales:true,
+    title:'賣家問「為什麼我的商品排名掉了」：幫你解釋',
+    desc:'賣家發現搜尋排名下滑，焦急地來問原因。讓 Claude 整理幾個可能原因，並給出可以馬上嘗試的建議。',
+    prompt:'賣家 [店鋪名] 說他的商品 [商品名/品項] 最近搜尋排名掉了。\n他補充：[例如：最近沒做什麼特別的事/剛改了定價/評分下滑]\n\n請整理 3 個可能造成排名下滑的原因（用賣家聽得懂的語言），每個原因對應一個具體行動。最後給我一段可以直接傳給賣家的回覆話術，語氣讓他覺得我有在認真幫他想。' },
+
+  { id:113, cat:'ops', catLabel:'日常營運', tool:'chat', toolLabel:'Chat', isSales:true,
+    title:'賣家問各種「為什麼」：讓 Claude 幫你想回答',
+    desc:'賣家每天都有問不完的問題。把問題丟給 Claude，直接產出一個讓賣家滿意的回覆。',
+    prompt:'賣家問我：「[直接把賣家的問題貼進來]」\n\n這個賣家是 [品項] 賣家，[商城/C2C] 賣家，[有/沒有] 在投廣告。\n\n請幫我：\n1) 用簡單的話解釋可能的原因（2-3 個）\n2) 給一個可以馬上嘗試的行動建議\n3) 整理成一段可以直接傳 LINE 的回覆，100-150 字，語氣友善。' },
+
+  { id:114, cat:'ops', catLabel:'日常營運', tool:'chat', toolLabel:'Chat', isSales:true,
+    title:'商城賣家 vs C2C 賣家：同一件事兩種說法',
+    desc:'商城和 C2C 賣家的背景和需求不同。讓 Claude 幫你把同一件事用兩種適合的語氣表達。',
+    prompt:'我需要告訴賣家：[你想說的事情，例如：下個月活動需要提前備貨，建議比平常多備 20% 的庫存]\n\n請分別寫：\n1) 給商城賣家（Mall）的版本：語氣正式一點，可以帶數據和策略建議\n2) 給 C2C 賣家的版本：語氣輕鬆直接，說明要簡單\n\n兩個版本都控制在 100 字以內。' },
+
+  { id:115, cat:'ops', catLabel:'日常營運', tool:'chat', toolLabel:'Chat', isSales:true,
+    title:'SMT project update 消化：馬上知道我這週要做什麼',
+    desc:'每次 SMT project update 內容很多，讓 Claude 幫你快速消化，抽出「我這週需要做什麼」，不用每個 slide 慢慢看。',
+    prompt:'以下是本週 SMT project update 的內容：\n[貼入 update 重點或全文]\n\n請整理成：\n1) 我這週「一定要做」的行動清單（含截止日期）\n2) 需要通知哪類廠商什麼內容\n3) 有沒有需要確認的問題或 follow-up 事項\n\n用繁體中文，格式清楚讓我可以直接拿去跟 leads 回報進度。' },
+
+  // ══ 業績健檢 ══
+  { id:116, cat:'health', catLabel:'業績健檢', tool:'chat', toolLabel:'Chat', isSales:true,
+    title:'店鋪數據看不懂：貼進來翻譯成人話',
+    desc:'不用懂數據分析，把賣家的店鋪數字貼進來，Claude 用白話說清楚「現在哪裡有問題」和「可以做什麼」。',
+    prompt:'以下是賣家 [店鋪名] 的店鋪數據：\n瀏覽量：[X]\n加購率：[X%]\n轉換率：[X%]\n平均客單價：[X元]\n退貨率：[X%]\n\n請用我可以直接跟賣家說的語言告訴我：\n1) 這個店鋪現在最大的問題是什麼（一句話）\n2) 最可能的原因\n3) 我明天可以建議賣家做一件什麼具體的事\n不要用太多專業術語。' },
+
+  { id:117, cat:'health', catLabel:'業績健檢', tool:'chat', toolLabel:'Chat', isSales:true,
+    title:'賣家業績掉了：幫我想 3 個可能原因',
+    desc:'賣家業績下滑，你不確定為什麼，但需要在對焦前準備好說法。讓 Claude 幫你想幾個合理的假說。',
+    prompt:'賣家 [店鋪名] 賣的是 [品項]，最近業績狀況：[例如：上個月比前個月少了大概 20%]。\n\n請幫我想 3 個最可能的原因，每個用一句話解釋，並告訴我：\n- 怎麼確認這個原因是否成立（查什麼）\n- 如果是這個原因，賣家可以怎麼做\n\n用我可以在 LINE 上跟賣家討論的語言。' },
+
+  { id:118, cat:'health', catLabel:'業績健檢', tool:'chat', toolLabel:'Chat', isSales:true,
+    title:'不知道要建議賣家做什麼：讓 Claude 幫你想',
+    desc:'知道賣家有問題，但不知道要建議他做什麼。把你觀察到的狀況告訴 Claude，整理出一個可以在對焦時說的具體建議。',
+    prompt:'我負責的賣家 [店鋪名] 賣的是 [品項]，我觀察到：\n[描述你看到的狀況，例如：\n- 商品圖片品質比競品差\n- 有幾個熱銷商品但沒有做任何廣告\n- 店鋪評分 4.6，有負評說出貨慢]\n\n下週我要跟他對焦，請幫我：\n1) 找出「最值得先處理」的一件事\n2) 告訴我怎麼跟他開口說這件事（給我開場白）\n3) 如果他問「那我要怎麼做」，我要怎麼回答他' },
+
+  { id:119, cat:'health', catLabel:'業績健檢', tool:'chat', toolLabel:'Chat', isSales:true,
+    title:'廠商預算有限：幫他想最划算的廣告投法',
+    desc:'廠商願意嘗試站內廣告但預算不多，讓 Claude 根據他的品項整理一個簡單的建議，讓他知道錢要怎麼花才值得。',
+    prompt:'廠商 [廠商名稱] 賣的是 [品項]，廣告月預算只有大概 [金額] 元。\n目前狀況：[例如：有 20 個在售商品、轉換率約 1.2%、主要靠自然流量]\n\n請整理一個簡單的廣告起步建議：\n1) 預算分配方向（2-3 個就好）\n2) 應該先幫哪類商品打廣告（一句話說原因）\n3) 最簡單的判斷廣告有沒有效的方式\n整理成我可以直接跟廠商說的版本，不要太技術性。' },
+
+  // ══ KPI 相關 ══
+  { id:120, cat:'kpi', catLabel:'KPI 相關', tool:'chat', toolLabel:'Chat', isSales:true,
+    title:'月底衝刺：告訴我今天應該先打給哪幾家',
+    desc:'把你負責的賣家 KPI 現況貼進來，Claude 根據「距離達標最近」幫你排出今天最值得衝的順序，附上每家的溝通重點。',
+    prompt:'月底還有 [X] 天，請幫我分析以下賣家的 KPI 狀況，排出今天最應該優先聯絡的順序：\n\n賣家A｜NC% 目前 [X%]，Baseline [X%]，Target [X%]｜FBS open rate [X%]（需達30%）\n賣家B｜NC% 目前 [X%]，Baseline [X%]，Target [X%]｜FBS open rate [X%]（需達30%）\n賣家C｜（以此類推）\n\n請幫我：\n1) 計算每家賣家的 NC% 達成率和 FBS 距離門檻\n2) 找出「距離達標最近、最值得今天衝」的前 3 家\n3) 每家給我一個打電話的開場白和溝通重點\n格式要清楚，讓我可以直接拿來行動。' },
+
+  { id:121, cat:'kpi', catLabel:'KPI 相關', tool:'chat', toolLabel:'Chat', isSales:true,
+    title:'NC% 算不清楚：貼數字讓 Claude 算給你看',
+    desc:'NC% 的計算邏輯複雜（Baseline × 0.9、Type A/B 不同 target）。把你的數字貼進來，Claude 幫你算清楚現在到底達成了幾分。',
+    prompt:'請幫我計算我的 NC% KPI 達成狀況：\nBaseline NC%（M-6 平均）：[X%]\nTarget NC%：[X%]\n本月目前實際 NC%：[X%]\n追蹤 SKU 數：[X] 個（Type A ≤400 / Type B >400）\n\n請計算：\n1) 目前達成率（%）\n2) KPI 得分（滿分 10 分）\n3) 距離滿分還差幾個百分點\n4) 月底前每天改善 1 個價高品，最多可以提升多少分\n\n用簡單的話告訴我現在狀況好不好，不要只有數字。' },
+
+  { id:122, cat:'kpi', catLabel:'KPI 相關', tool:'chat', toolLabel:'Chat', isSales:true,
+    title:'NC% 一直上不去：幫我找今天可以調的商品',
+    desc:'知道 NC% 不夠但不知道從哪裡下手。把追蹤的商品價格數據貼進來，Claude 幫你找出最容易改善 NC% 的商品。',
+    prompt:'我的 NC% 目前是 [X%]，Target 是 [X%]，還差 [X%] 達標。\n\n以下是我追蹤的商品價格狀況：\n商品名稱｜蝦皮售價｜競品（momo）售價｜目前狀態\n[商品A]｜[X元]｜[X元]｜[價高]\n[商品B]｜[X元]｜[X元]｜[價高]\n\n請幫我：\n1) 找出「調整幅度最小但效果最大」的前 3 個商品\n2) 每個商品建議調整到多少價格\n3) 幫我寫一段跟賣家說「請調這個商品定價」的 LINE 訊息，語氣讓賣家願意配合' },
+
+  { id:123, cat:'kpi', catLabel:'KPI 相關', tool:'chat', toolLabel:'Chat', isSales:true,
+    title:'FBS 檢查日快到了：哪些賣家最危險',
+    desc:'FBS 第 4 週檢查 open rate，不到 30% 就會被移除免費資格。把你的賣家清單貼進來，Claude 幫你找出最危險的幾家和催促話術。',
+    prompt:'FBS 開通率檢查日是 [日期]，還有 [X] 天。以下是我負責賣家的 FBS 狀況：\n\n賣家名稱｜全店商品數｜已開通 FBS 數｜目前 open rate\n[賣家A]｜[X個]｜[X個]｜[X%]\n[賣家B]｜[X個]｜[X個]｜[X%]\n\n請幫我：\n1) 找出目前 open rate 未達 30% 的賣家\n2) 每家還需要開通幾個商品才能達標\n3) 排出今天最緊急要聯絡的順序\n4) 每家賣家的催促話術（簡短、有急迫感但不強迫）' },
+
+  { id:124, cat:'kpi', catLabel:'KPI 相關', tool:'chat', toolLabel:'Chat', isSales:true,
+    title:'整理本週 KPI 進度：幫我寫給 leads 的週報',
+    desc:'每週要向 leads 回報 KPI 進度，整理起來很花時間。把你的數字貼進來，Claude 幫你整理成一段可以直接傳的週報。',
+    prompt:'請幫我整理本週 KPI 進度報告：\n\nNC% 狀況：\n達標賣家：[X 家]\n未達標：[X 家]，最差的是 [賣家名] [X%]\n本週有改善的：[賣家名，從 X% 進步到 X%]\n\nFBS open rate 狀況：\n達 30% 門檻：[X 家 / 共 X 家]\n本週新開通：[賣家名，現在 X%]\n仍需追蹤：[賣家名，目前 X%]\n\n本週困難：[例如：賣家A 不願意調價，原因是...]\n下週計劃：[例如：重點衝賣家B 和賣家C 的 FBS]\n\n請整理成一段通順的中文週報，語氣專業簡潔，200 字以內。' },
+
+];
+
+
+const CM_TIPS = [
+
+  // ══ 外部市場追蹤 ══
+  { id:201, cat:'market', catLabel:'外部市場追蹤', tool:'chat', toolLabel:'Chat', isCM:true,
+    title:'子品類市場趨勢快報：讓 Claude 幫你搜尋外部資訊',
+    desc:'不用自己一個個查，把子品類名稱給 Claude，它幫你整理最新的市場趨勢、爆紅商品和 Shopee 的機會點。',
+    prompt:'請幫我搜尋 [子品類名稱，例如：心理勵志書籍／偶像商品／樂高] 在台灣市場的最新趨勢。\n\n請整理：\n1) 目前最熱的 3 個細分方向或題材（附具體例子）\n2) 近期有沒有爆紅的商品或 IP\n3) 消費者最近在討論什麼\n4) 對應 Shopee 的機會點：\n   - 目前可能缺的商品類型\n   - 值得接觸的廠商方向\n   - 建議的切入時機\n\n格式要讓我可以直接帶進品類週報。' },
+
+  { id:202, cat:'market', catLabel:'外部市場追蹤', tool:'chat', toolLabel:'Chat', isCM:true,
+    title:'IP 爆紅了：快速評估對我的品類有什麼機會',
+    desc:'看到某個 IP 或話題爆紅，讓 Claude 幫你在 5 分鐘內評估對自己品類的影響，找出具體的選品和廠商接觸方向。',
+    prompt:'最近 [IP名稱／話題，例如：某部動漫、某個偶像團體、某本暢銷書] 在台灣很熱。\n\n請幫我分析這個趨勢對以下品類的影響和機會：\n[選擇相關品類，例如：模型動漫玩具／偶像商品／漫畫小說]\n\n1) 這個 IP 目前的熱度和預計持續時間\n2) 已經有哪些相關商品在市面上\n3) Shopee 目前的佈局是否足夠\n4) 建議接觸哪類廠商、切入點是什麼\n5) 最佳行動時間點' },
+
+  { id:203, cat:'market', catLabel:'外部市場追蹤', tool:'chat', toolLabel:'Chat', isCM:true,
+    title:'Books 暢銷榜 × 子品類機會：每月一次市場對標',
+    desc:'讓 Claude 搜尋誠品、博客來、金石堂暢銷榜，對應你負責的 9 個 Books 子品類，找出哪裡需要補強選品。',
+    prompt:'請搜尋本月台灣前三大書店（誠品、博客來、金石堂）的暢銷排行榜。\n\n對照以下書籍子品類：\n參考書、漫畫小說、文藝書籍、親子書籍、心理勵志、健康運動、商業財經、星座命理、人文社會\n\n請找出：\n1) 目前最熱的 3 個細類（附代表書名）\n2) 即將爆發的潛力主題（有上升趨勢但還沒到頂）\n3) 我們可以搶先佈局的選品建議\n   格式：主題｜建議切入時機｜可合作廠商類型' },
+
+  { id:204, cat:'market', catLabel:'外部市場追蹤', tool:'chat', toolLabel:'Chat', isCM:true,
+    title:'找出「市場在長但我們沒佈局」的空白機會',
+    desc:'主動發掘品類空白點，不只是被動看數字。讓 Claude 幫你找出實體通路在賣、社群在討論、但 Shopee 還沒跟上的商品方向。',
+    prompt:'請幫我搜尋台灣 [Books／Life & Entertainment] 品類目前的市場，特別找：\n\n1) 實體通路（書店、玩具店、動漫專賣）在主打但電商可能還沒跟上的品項\n2) 社群上討論度高但 Shopee 可能選品不足的商品類型\n3) 鄰近市場（日本、韓國）現在流行、台灣還沒起來的品項\n4) 整理成「機會白名單」：3-5 個值得優先評估的方向，附上為什麼值得做\n\n格式要讓我可以帶進品類策略會議。' },
+
+  // ══ 內部數據挖掘 ══
+  { id:205, cat:'data', catLabel:'內部數據挖掘', tool:'chat', toolLabel:'Chat', isCM:true,
+    title:'數據貼進來：翻譯成有洞察的語言',
+    desc:'把 Google Sheets 的子品類數據複製貼上，Claude 幫你找出成長引擎、衰退預警和值得向上報告的亮點。',
+    prompt:'以下是我從後台複製的 [子品類名稱] 銷售數據（[時間區間]）：\n[直接把 Google Sheets 的數據複製貼上]\n\n請幫我分析：\n1) 整體趨勢是成長、持平還是衰退？\n2) 表現最好的前 3 個商品或細分方向是什麼？成長原因推測？\n3) 表現最差或下滑最明顯的是哪些？可能原因？\n4) 有沒有什麼「異常值」值得注意？\n5) 用 2 句話總結：現在這個品類的健康狀態\n\n格式要讓我可以直接帶進週報或向上報告。' },
+
+  { id:206, cat:'data', catLabel:'內部數據挖掘', tool:'chat', toolLabel:'Chat', isCM:true,
+    title:'找出品類成長引擎：哪個子品類在帶動整體',
+    desc:'貼上各子品類的數據，讓 Claude 幫你找出成長引擎、潛力黑馬和需要預警的品類，直接支援資源配置決策。',
+    prompt:'以下是我的品類數據，包含各子品類的銷售額和成長率：\n[複製貼上數據]\n\n請幫我找出：\n1) 目前的「成長引擎」是哪 1-2 個子品類？（成長率高且基數不小）\n2) 有沒有「潛力黑馬」？（基數還小但成長很快）\n3) 有沒有「需要預警」的子品類？（持續下滑或突然掉）\n4) 如果要向 Director 報告「下季應該加碼哪裡」，數據支持的答案是什麼？\n\n用品類經理的語氣，不只說數字，說背後的意義。' },
+
+  { id:207, cat:'data', catLabel:'內部數據挖掘', tool:'chat', toolLabel:'Chat', isCM:true,
+    title:'品類結構健康度：找出選品空缺和供需不平衡',
+    desc:'貼上品類商品結構數據，讓 Claude 評估哪個子品類商品太少、價格帶有缺口，找出具體的補強方向。',
+    prompt:'以下是 [品類名稱] 目前的商品結構數據：\n[複製貼上：子品類／商品數／活躍賣家數／平均客單價等]\n\n請幫我評估：\n1) 哪個子品類商品太少或選品不足？\n2) 價格帶分布是否健康？有沒有某個價格帶嚴重缺貨？\n3) 跟市場需求相比，哪裡有「供需不平衡」的機會？\n4) 建議優先補強的方向（具體到什麼品項或廠商類型）' },
+
+  // ══ 成長機會點 ══
+  { id:208, cat:'growth', catLabel:'成長機會點', tool:'chat', toolLabel:'Chat', isCM:true,
+    title:'外部趨勢 × 內部數據：找出這個月最值得做的事',
+    desc:'把你觀察到的市場趨勢和內部數據一起給 Claude，它幫你判斷機會有多大、我們目前位置在哪、具體要做什麼。',
+    prompt:'我有以下兩份資訊，請幫我結合分析：\n\n【外部趨勢】\n[貼入你觀察到的市場趨勢，例如：最近台灣手帳文化很流行、韓國某偶像在台灣爆紅]\n\n【內部數據】\n[貼入對應子品類的近期銷售數據或表現描述]\n\n請幫我：\n1) 評估這個趨勢對我品類的影響程度（高/中/低，說明原因）\n2) 我們目前的數據是否已經反映出這個趨勢？還是還沒跟上？\n3) 如果要抓住這個機會，具體可以做什麼？\n   - 選品方向\n   - 廠商接觸建議\n   - 活動企劃切入點\n4) 建議的行動時間軸（現在／1個月內／下季）' },
+
+  { id:209, cat:'growth', catLabel:'成長機會點', tool:'chat', toolLabel:'Chat', isCM:true,
+    title:'下季成長規劃：幫我整理一個有說服力的方向',
+    desc:'季度規劃前，把本季表現和外部環境給 Claude，它幫你規劃下季重點子品類和成長策略，格式可以直接帶進季度會議。',
+    prompt:'我負責的品類：[Books／L&E 的具體子品類]\n本季表現摘要：[貼入關鍵數據或簡短描述]\n外部環境：[有沒有什麼重要趨勢或節日]\n\n請幫我規劃下季成長方向：\n1) 建議聚焦的 2-3 個子品類（說明為什麼）\n2) 每個子品類的成長策略（選品補強／廠商開發／活動企劃）\n3) 預期可以帶來的影響\n4) 需要跨部門配合的事項\n\n用品類策略報告的格式輸出，讓我可以直接帶進季度規劃會議。' },
+
+  // ══ 向上溝通 ══
+  { id:210, cat:'report', catLabel:'向上溝通', tool:'chat', toolLabel:'Chat', isCM:true,
+    title:'品類週報亮點：數字變成兩句有洞察的話',
+    desc:'把本週的數字和重要事件給 Claude，它幫你整理成一段讓 Director 一眼看懂的週報，不只陳述數字，說背後的意義。',
+    prompt:'以下是本週 [品類名稱] 的數據摘要：\n[貼入本週關鍵數字]\n\n本週重要事件：\n[例如：某個 IP 突然爆紅、競品做了什麼活動、某個廠商新品上市]\n\n請幫我整理成週報：\n1) 本週最重要的 1 個亮點（正面）\n2) 本週最需要關注的 1 個風險或下滑訊號\n3) 下週的 1 個重點行動\n\n每點 2 句話以內，語氣適合給 Director 看。' },
+
+  { id:211, cat:'report', catLabel:'向上溝通', tool:'chat', toolLabel:'Chat', isCM:true,
+    title:'「為什麼這個品類掉了」：快速準備說明',
+    desc:'主管問品類為什麼下滑，需要快速準備說明。把狀況給 Claude，它幫你整理成有條理的原因分析，區分可控和不可控因素。',
+    prompt:'[子品類名稱] 最近的表現：[描述下滑幅度和時間]\n\n可能的背景因素：\n[你知道的資訊，例如：剛結束大促、競品做了活動、某廠商下架商品、季節性因素]\n\n請幫我準備說明：\n1) 最可能的 2-3 個原因（按可能性排序）\n2) 哪些是外部因素（不可控）、哪些是內部因素（可改善）\n3) 下一步可以做什麼來驗證原因或改善\n4) 整理成一段可以在會議上口頭說明的話（100字以內）' },
+
+  { id:212, cat:'report', catLabel:'向上溝通', tool:'chat', toolLabel:'Chat', isCM:true,
+    title:'「下季值得加碼哪裡」：整理成有說服力的一頁建議',
+    desc:'想向 Director 提議加碼某個子品類，讓 Claude 幫你把理由整理成清楚有力的分析，像一頁 PPT 的說明。',
+    prompt:'我想向 Director 提議下季加碼 [子品類名稱]。\n\n支持這個建議的理由：\n外部面：[市場趨勢、競品動向、消費者行為]\n內部面：[目前數據表現、成長潛力]\n\n請幫我整理成有說服力的分析：\n1) 市場機會有多大（用數字或趨勢描述）\n2) 我們目前的位置（優勢和不足）\n3) 如果加碼，具體要做什麼\n4) 預期的回報\n\n格式要像一頁 PPT 的說明，讓主管一眼看懂為什麼值得做。' },
+
+];
+
+const MAP_DATA = [
+  { name:'報告製作', sub:'月報、雙週報、簡報', items:[
+    { tool:'cowork',   label:'Cowork',      text:'<strong>月報機器人</strong> — 在 Project 設定好格式規則，每次貼入原始數據自動輸出結構化月報草稿，含信心等級標注' },
+    { tool:'skill',    label:'Skill',       text:'<strong>PPT 報告 Skill</strong> — 用 pptx skill 直接輸出 Shopee 橘色風格投影片，含三欄版型、頁尾來源' },
+    { tool:'artifact', label:'Artifact',    text:'<strong>互動式數據儀表板</strong> — 把月度數字做成可篩選的圖表 artifact，開會時直接呈現給 Director' },
+  ]},
+  { name:'業務開發', sub:'廠商開發、提案、BD信件', items:[
+    { tool:'chat',     label:'Chat',        text:'<strong>廠商情報快報</strong> — 拜訪前開啟網路搜尋，10 分鐘整理品牌定位、近期動態和開場話題' },
+    { tool:'cowork',   label:'Cowork',      text:'<strong>開發信機器人</strong> — Project 記住你的 BD 風格，每次只需貼入廠商背景自動生成客製化開發信' },
+    { tool:'artifact', label:'Artifact',    text:'<strong>一頁式提案 Artifact</strong> — 快速生成給廠商看的合作提案 HTML，可直接截圖帶進會議' },
+  ]},
+  { name:'賣家溝通', sub:'營運對焦、業績輔導', items:[
+    { tool:'chat',     label:'Chat',        text:'<strong>溝通語氣轉換器</strong> — 把直白要求改寫成賣家容易接受的夥伴式建議，減少溝通摩擦' },
+    { tool:'cowork',   label:'Cowork',      text:'<strong>月度對焦議程生成</strong> — 貼入賣家近況和議題，自動輸出結構化會議議程含預期結論' },
+    { tool:'artifact', label:'Artifact',    text:'<strong>聯盟行銷效益試算</strong> — 互動式試算表，開會時直接給賣家看預估收益 ROI' },
+  ]},
+  { name:'數據分析', sub:'業績追蹤、異常偵測', items:[
+    { tool:'cowork',   label:'Cowork',      text:'<strong>9步驟深度分析</strong> — Project 儲存分析方法論，上傳 CSV 後自動跑完成長驅動、衰退預警' },
+    { tool:'code',     label:'Claude Code', text:'<strong>自動化清洗腳本</strong> — 寫 Python 腳本把後台導出的亂格式 Excel 整理成標準分析格式' },
+    { tool:'artifact', label:'Artifact',    text:'<strong>品類健康度儀表板</strong> — 輸入數字後自動顯示紅黃綠燈警示的互動分數卡' },
+  ]},
+  { name:'趨勢追蹤', sub:'IP熱點、產業動態', items:[
+    { tool:'chat',     label:'Chat',        text:'<strong>週五 IP 熱點報</strong> — 每週開啟搜尋，追蹤動漫、日韓偶像、桌遊新品趨勢，輸出選品建議' },
+    { tool:'skill',    label:'Skill',       text:'<strong>趨勢情報 Skill</strong> — 建立專門把網路趨勢轉換成品類選品建議格式的客製化 Skill' },
+    { tool:'cowork',   label:'Cowork',      text:'<strong>Books 選題雷達</strong> — 定期上傳暢銷榜，追蹤對應 9 個書籍 subcat 的熱門主題消長' },
+  ]},
+  { name:'活動企劃', sub:'節慶活動、雙11、年中慶', items:[
+    { tool:'chat',     label:'Chat',        text:'<strong>競品活動分析</strong> — 貼入競品活動規劃，快速得出 L&E 差異化切入點和廠商配合方案' },
+    { tool:'artifact', label:'Artifact',    text:'<strong>活動企劃書 Artifact</strong> — 做出活動規劃一頁式摘要，含 GMV 目標、主打品類、廠商配合清單' },
+    { tool:'cowork',   label:'Cowork',      text:'<strong>Meeting Follow-up 機器人</strong> — 貼入會議筆記，自動生成承諾事項清單和 Follow-up 信草稿' },
+  ]},
+];
+
+let currentRole = 'bd';
+let tipCat = 'all';
+let mapTool = null;
+
+const CM_CATS = [{k:'all',l:'全部'},{k:'market',l:'外部市場追蹤'},{k:'data',l:'內部數據挖掘'},{k:'growth',l:'成長機會點'},{k:'report',l:'向上溝通'}];
+const BD_CATS    = [{k:'all',l:'全部'},{k:'report',l:'報告製作'},{k:'bd',l:'業務開發'},{k:'data',l:'數據分析'},{k:'trend',l:'趨勢追蹤'},{k:'promo',l:'活動企劃'}];
+const SALES_CATS = [{k:'all',l:'全部'},{k:'dev',l:'業務開發'},{k:'maintain',l:'業務維護'},{k:'ops',l:'日常營運'},{k:'health',l:'業績健檢'},{k:'kpi',l:'KPI 相關'}];
+
+function switchRole(role) {
+  currentRole = role;
+  tipCat = 'all';
+  document.getElementById('role-bd').className    = 'role-toggle-btn' + (role==='bd'    ? ' active bd'    : '');
+  document.getElementById('role-sales').className = 'role-toggle-btn' + (role==='sales' ? ' active sales' : '');
+  document.getElementById('role-cm').className    = 'role-toggle-btn' + (role==='cm'    ? ' active cm'    : '');
+  const intro = document.getElementById('sales-intro');
+  if (intro) intro.style.display = role === 'sales' ? 'block' : 'none';
+  renderFilters();
+  renderTips();
+}
+
+function renderFilters() {
+  const cats  = currentRole === 'bd' ? BD_CATS : currentRole === 'cm' ? CM_CATS : SALES_CATS;
+  const color = currentRole === 'bd' ? 'bd' : 'sales';
+  document.getElementById('tips-filter').innerHTML = cats.map(c =>
+    `<button class="filter-btn${tipCat===c.k?' active '+color:''}" data-cat="${c.k}">${c.l}</button>`
+  ).join('');
+  document.querySelectorAll('#tips-filter .filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      tipCat = this.dataset.cat;
+      const col = currentRole === 'bd' ? 'bd' : 'sales';
+      document.querySelectorAll('#tips-filter .filter-btn').forEach(b => b.className = 'filter-btn');
+      this.className = 'filter-btn active ' + col;
+      renderTips();
+    });
+  });
+}
+
+function renderTips() {
+  const pool    = (currentRole === 'bd' ? BD_TIPS : currentRole === 'cm' ? CM_TIPS : SALES_TIPS).filter(t => tipCat==='all' || t.cat===tipCat);
+  const isSales = currentRole === 'sales';
+  const isCM    = currentRole === 'cm';
+  const list    = document.getElementById('tips-list');
+  if (!pool.length) { list.innerHTML = '<div class="empty-tips">這個分類目前沒有撇步，選「全部」看看吧。</div>'; return; }
+  list.innerHTML = pool.map((tip, i) => `
+    <div class="tip-card${isSales?' sales-card':isCM?' cm-card':''}" id="tip-${tip.id}">
+      <div class="tip-header-row" onclick="toggleTip(${tip.id})">
+        <div class="tip-num${isSales?' sales-num':isCM?' cm-num':''}">${i+1}</div>
+        <div class="tip-meta">
+          <div class="tip-badges">
+            ${isSales ? `<span class="tip-badge badge-sales">業務</span>` : ''}
+            ${isCM    ? `<span class="tip-badge badge-cm">品類管理</span>` : ''}
+            <span class="tip-badge badge-${tip.tool}">${tip.toolLabel}</span>
+            <span class="badge-cat">${tip.catLabel}</span>
+          </div>
+          <div class="tip-title">${tip.title}</div>
+        </div>
+        <span class="tip-chevron">▾</span>
+      </div>
+      <div class="tip-body">
+        <p class="tip-desc">${tip.desc}</p>
+        <div class="prompt-box${isSales?' sales-prompt':isCM?' cm-prompt':''}">
+          <div class="prompt-label">參考提示詞</div>
+          <div class="prompt-text">${tip.prompt}</div>
+        </div>
+        <button id="copy-${tip.id}" class="copy-btn ${isSales?'sales':isCM?'cm':'bd'}" onclick="copyPrompt(${tip.id},event)">複製提示詞</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleTip(id) {
+  document.getElementById('tip-'+id).classList.toggle('open');
+}
+
+function copyPrompt(id, e) {
+  e.stopPropagation();
+  const tip = [...BD_TIPS,...SALES_TIPS,...CM_TIPS].find(t=>t.id===id);
+  if (!tip) return;
+  navigator.clipboard.writeText(tip.prompt).catch(()=>{});
+  const btn = document.getElementById('copy-'+id);
+  if (btn) { const o=btn.textContent; btn.textContent='已複製！'; setTimeout(()=>btn.textContent=o, 1600); }
+}
+
+function mapFilter(tool, el) {
+  if (mapTool===tool) { mapTool=null; document.querySelectorAll('.map-pill').forEach(p=>p.classList.remove('dim')); }
+  else { mapTool=tool; document.querySelectorAll('.map-pill').forEach(p=>p.classList.toggle('dim',p.dataset.tool!==tool)); }
+  renderMap();
+}
+
+function renderMap() {
+  let html = '';
+  MAP_DATA.forEach(wf => {
+    const items = mapTool ? wf.items.filter(i=>i.tool===mapTool) : wf.items;
+    if (!items.length) return;
+    html += `<div class="wf-row">
+      <div class="wf-label"><div class="wf-name">${wf.name}</div><div class="wf-sub">${wf.sub}</div></div>
+      <div class="wf-items">${items.map(item=>`
+        <div class="wf-item">
+          <span class="wf-tag tag-${item.tool}">${item.label}</span>
+          <span class="wf-text">${item.text}</span>
+          <span class="wf-arrow">›</span>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  });
+  document.getElementById('wf-grid').innerHTML = html;
+}
+
+renderFilters();
+renderTips();
+renderMap();
+</script>
+</body>
+</html>
